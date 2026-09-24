@@ -80,7 +80,7 @@ Página principal, editor de cuadro, solicitudes, aptos, horas, vacaciones y pac
 
 ## Pendiente / decisiones para el cliente
 
-- [ ] Confirmar si 15 minutos de inactividad es adecuado para las estaciones de enfermería.
+- [x] Cierre de sesión por inactividad: **15 minutos confirmado** (24-sep-2026).
 - [ ] Recuperación de contraseña: hoy la restablece el coordinador (la recuperación por correo es "Could").
 - [ ] La auditoría crece sin límite; rotarla por año cuando se acerque la entrega.
 
