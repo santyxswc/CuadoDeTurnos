@@ -3,11 +3,13 @@
 
 | Campo | Valor |
 |---|---|
-| Versión | 0.2 (incorpora respuestas del cliente, ver [02_Decisiones_Respuestas_Cliente.md](02_Decisiones_Respuestas_Cliente.md)) |
+| Versión | 0.3 (v0.2: respuestas del cliente, ver [02_Decisiones_Respuestas_Cliente.md](02_Decisiones_Respuestas_Cliente.md) · v0.3: **sin base de datos, persistencia en archivos JSON**, ADR-010) |
 | Fecha | 24 de septiembre de 2026 |
 | Fase | Planeación · levantamiento de requisitos y arquitectura (sin código) |
 | Fecha de entrega comprometida | Miércoles 11 de noviembre de 2026 |
 | Audiencia | Tech lead, desarrolladores, QA, product owner |
+
+> **Decisión vigente (24-sep-2026): el proyecto NO usa base de datos.** Por tiempo, costo y complejidad, toda la información (credenciales incluidas) se guarda en **archivos JSON** administrados por la API. Ver ADR-010 y §9.5. Es una aplicación interna de un solo servicio (10 usuarios), no expuesta a internet.
 
 > **Regla de esta fase:** no se escribe código de producto. Los entregables de la semana 0 son: requisitos validados, modelo C4, modelo de datos, decisiones de arquitectura (ADR), backlog priorizado y prototipos de pantalla (wireframes).
 
@@ -31,6 +33,8 @@ Un equipo de enfermería necesita reemplazar la gestión manual de su **cuadro d
 | **Won't (v1)** | Generación automática/optimizada del cuadro · Liquidación completa de nómina (sí se calcula el valor estimado de recargos, ver ADR-008) · App móvil · Integración con biométricos, HIS o sistemas de talento humano · ~~Datos identificables de pacientes~~ (el cliente los pidió, ver ADR-009) · Modo sin conexión |
 
 ### 2.2 Supuestos (a confirmar en la reunión del 30-sep)
+
+0. **Sin base de datos:** persistencia en archivos JSON en el equipo servidor (ADR-010). No se prevé crecer a más servicios ni exponer la app a internet.
 
 1. Un solo servicio/unidad con un solo coordinador/a activo (el diseño admite varios servicios, pero la UI del MVP asume uno).
 2. ~~Entre 15 y 60 usuarios~~ **Confirmado: 10 usuarios (1 coordinador y 9 enfermeros).** Todos usan equipos Windows 10/11 conectados a la red de la institución.
@@ -231,7 +235,7 @@ Un cuadro publicado no se sobrescribe: cada cambio crea una versión. Las horas 
 | RNF-05 | Privacidad | Cumplimiento de la Ley 1581 de 2012 (habeas data): minimización de datos del personal, aviso de privacidad en el primer ingreso, cero datos identificables de pacientes. |
 | RNF-06 | Trazabilidad | Auditoría inmutable de acciones sensibles, retenida mínimo 2 años (a confirmar). |
 | RNF-07 | Disponibilidad | Servicio disponible 24/7 (los turnos son 24/7). Si el servidor cae, el cliente muestra el último cuadro descargado en solo lectura y un aviso claro. |
-| RNF-08 | Respaldo | Backup automático diario de la base de datos con retención de 30 días y prueba de restauración antes de la entrega. |
+| RNF-08 | Respaldo | Copia automática diaria de la carpeta de datos JSON con retención de 30 días y prueba de restauración antes de la entrega. |
 | RNF-09 | Usabilidad | Operable por personal no técnico con máximo 1 h de capacitación; textos 100 % en español; contraste accesible. |
 | RNF-10 | Actualización | Actualización automática del cliente desde el servidor de la institución. |
 | RNF-11 | Mantenibilidad | Cobertura de pruebas ≥ 90 % en el motor de cálculo de horas y reglas de aptitud; ≥ 60 % global en backend. |
@@ -309,21 +313,22 @@ Y al publicar el cuadro todo el equipo recibe la notificación
 ## 8. Arquitectura
 
 ### 8.1 Estilo arquitectónico
-**Cliente-servidor con backend monolítico modular.** Varias estaciones de trabajo deben compartir el mismo cuadro, las mismas solicitudes y el mismo chat en tiempo real, así que una app de escritorio aislada con base de datos local no sirve: se necesita un servidor central. Un monolito modular (un solo despliegue, módulos con límites claros) es lo adecuado para un equipo pequeño y un plazo de 7 semanas; los módulos quedan listos para separarse si algún día hace falta.
+**Cliente-servidor con backend monolítico modular y persistencia en archivos JSON.** Varias estaciones de trabajo deben compartir el mismo cuadro, las mismas solicitudes y el mismo chat en tiempo real, así que cada app de escritorio no puede guardar sus propios datos: se necesita un proceso central (la API) que sea el **único** que lee y escribe los archivos JSON. Un monolito modular (un solo despliegue, módulos con límites claros) es lo adecuado para un equipo pequeño y un plazo de 7 semanas; los módulos quedan listos para separarse si algún día hace falta.
 
 ### 8.2 Registro de decisiones de arquitectura (ADR)
 
 | ADR | Decisión | Alternativas | Razón | Estado |
 |---|---|---|---|---|
 | ADR-001 | Backend monolítico modular + API REST + WebSocket | Microservicios; app 100 % local | Plazo, tamaño del equipo, necesidad de datos compartidos | Propuesta |
-| ADR-002 | Cliente **Electron + React + TypeScript**; API **Node.js + NestJS**; **Socket.IO** para tiempo real; ORM **Prisma**; monorepo con tipos compartidos | Tauri (más liviano, requiere Rust); .NET (WPF/Avalonia + ASP.NET Core + SignalR) | Un solo lenguaje de punta a punta, ecosistema maduro, instalador y auto-update resueltos (electron-builder). **Si el equipo domina C#, la opción .NET es equivalente**; se decide el 25-sep según perfiles | Por decidir |
-| ADR-003 | **PostgreSQL** como base de datos única (incluye chat y auditoría) | SQL Server; MongoDB; servicio de chat externo | Relacional encaja con turnos/solicitudes; tipos `timestamptz` y rangos; los mensajes internos no salen de la institución | Propuesta |
+| ADR-002 | Cliente **Electron + React + TypeScript**; API **Node.js + NestJS**; **Socket.IO** para tiempo real; persistencia en JSON (ADR-010); monorepo con tipos compartidos | Tauri (más liviano, requiere Rust); .NET (WPF/Avalonia + ASP.NET Core + SignalR) | Un solo lenguaje de punta a punta, ecosistema maduro, instalador y auto-update resueltos (electron-builder). **Si el equipo domina C#, la opción .NET es equivalente**; se decide el 25-sep según perfiles | Por decidir |
+| ADR-003 | ~~**PostgreSQL** como base de datos única~~ | SQL Server; MongoDB; servicio de chat externo | — | **Reemplazada por ADR-010** (24-sep-2026) |
 | ADR-004 | **Motor de reglas laborales parametrizable con vigencias** | Constantes en código | Las normas cambian por fechas (42 h desde jul-2026; recargo dominical 100 % desde jul-2027) y pueden variar entre sector público y privado | Propuesta |
 | ADR-005 | **Hora del servidor** para marcaciones | Hora del cliente | Evita manipulación del reloj del equipo | Aceptada |
 | ADR-006 | Horas calculadas = **dato derivado y recalculable**; snapshot solo al cerrar período | Guardar horas editables | Una sola fuente de verdad (asignaciones y marcaciones) | Propuesta |
-| ADR-007 | Despliegue en **servidor on-premise** de la institución con Docker Compose (API + PostgreSQL + proxy TLS) | Nube (VPS) | Datos dentro de la red; depende de TI del cliente → si no hay servidor disponible, VPS en nube | Por decidir con el cliente |
+| ADR-007 | Despliegue de la API (proceso Node.js) en **un equipo de la institución** que haga de servidor dentro de la red local; los archivos JSON viven en ese equipo | Nube (VPS); Docker Compose con base de datos | Datos dentro de la red, sin costos de infraestructura; depende de que el cliente defina qué equipo queda encendido 24/7 | Por decidir con el cliente |
 | ADR-008 | **Valor estimado de recargos** con porcentajes base parametrizados con vigencia | No calcular dinero | El cliente envió salarios y tabla de recargos | Propuesta, validar 30-sep |
-| ADR-009 | **Registro de pacientes con datos sensibles** cifrados por columna y auditoría de lectura | Solo conteo | El cliente pidió nombre, documento, diagnóstico, teléfono y egreso | Propuesta, requiere aprobación escrita |
+| ADR-009 | **Registro de pacientes con datos sensibles** cifrados por campo dentro del JSON y auditoría de lectura | Solo conteo | El cliente pidió nombre, documento, diagnóstico, teléfono y egreso | Propuesta, requiere aprobación escrita |
+| ADR-010 | **Sin base de datos: persistencia en archivos JSON** administrados solo por la API (un archivo por colección; auditoría en JSON Lines). Credenciales en `usuarios.json` con contraseña hasheada (Argon2id) | PostgreSQL (ADR-003); SQLite; archivos JSON en carpeta compartida de red | Tiempo, costo y complejidad; 10 usuarios y un solo servicio; no se publica en internet. Se descarta la carpeta compartida porque varias estaciones escribiendo el mismo archivo lo corrompen | **Aceptada** (24-sep-2026) |
 
 ### 8.3 Estructura del monorepo (propuesta)
 ```
@@ -334,9 +339,33 @@ sgt/
 ├── packages/
 │   ├── shared-types/   # DTOs y enums compartidos
 │   └── rules-engine/   # cálculo de horas, aptitud, vacaciones (TS puro, sin dependencias de framework)
-├── infra/              # docker-compose, proxy, scripts de backup
+├── infra/              # scripts de respaldo de la carpeta de datos
 └── docs/               # este documento, ADRs, diagramas
 ```
+**Carpeta de datos** (fuera del repositorio, ruta configurable con `SGT_DATA_DIR`; en desarrollo `apps/api/datos/`, ignorada por git):
+```
+datos/
+├── usuarios.json          # credenciales (hash Argon2id), rol, cargo, fecha de ingreso, historial salarial
+├── tipos-turno.json
+├── cuadros.json           # cuadros con sus versiones y asignaciones
+├── marcaciones.json
+├── solicitudes.json
+├── vacaciones.json        # periodos causados y carga inicial
+├── pacientes.json         # documento, teléfono y diagnóstico cifrados (AES-256-GCM)
+├── chat/2026-10.json      # un archivo por mes para que no crezca sin límite
+├── parametros.json        # parámetros laborales con vigencia
+├── festivos.json
+└── auditoria.jsonl        # JSON Lines: una línea por evento, solo se agrega al final
+```
+
+**Reglas de la persistencia JSON (ADR-010):**
+1. **Solo la API escribe.** Las apps de escritorio nunca abren los archivos; todo pasa por la API.
+2. **Escritura atómica:** se escribe en `archivo.json.tmp` y luego se renombra, para que un corte de luz no deje un archivo a medias.
+3. **Escrituras en cola:** una sola escritura a la vez por archivo (cola en memoria), para evitar que dos peticiones se pisen.
+4. **Caché en memoria:** los archivos se cargan al arrancar la API y se sirven desde memoria; con 10 usuarios el volumen es pequeño.
+5. **Repositorios con interfaz:** cada módulo accede a sus datos a través de un repositorio (`UsuariosRepositorio`, etc.). Si algún día se necesita una base de datos, solo se cambia la implementación del repositorio.
+6. **La llave de cifrado** de los datos de pacientes no se guarda en la carpeta de datos (variable de entorno del servidor).
+
 `rules-engine` es un paquete puro y sin E/S para poder probarlo exhaustivamente de forma aislada; tanto la API como el cliente (para previsualizar advertencias) lo usan.
 
 ## 9. Modelo C4
@@ -370,17 +399,17 @@ C4Container
   System_Boundary(sgt, "SGT") {
     Container(desk, "Aplicación de escritorio", "Electron, React, TypeScript", "Interfaz: página principal, cuadro, solicitudes, chat, administración. Caché de solo lectura del último cuadro")
     Container(api, "API de aplicación", "Node.js, NestJS", "Lógica de negocio, autorización por rol, motor de reglas, REST + WebSocket")
-    ContainerDb(db, "Base de datos", "PostgreSQL", "Usuarios, cuadros, asignaciones, marcaciones, solicitudes, vacaciones, chat, auditoría, parámetros")
+    ContainerDb(db, "Archivos de datos", "JSON en disco", "Usuarios y credenciales, cuadros, asignaciones, marcaciones, solicitudes, vacaciones, pacientes, chat, auditoría, parámetros")
     Container(proxy, "Proxy inverso TLS", "Caddy o Nginx", "Termina HTTPS/WSS, sirve actualizaciones del cliente")
-    Container(backup, "Tarea de respaldo", "pg_dump + cron", "Backup diario con retención de 30 días")
+    Container(backup, "Tarea de respaldo", "Script programado", "Copia diaria de la carpeta de datos con retención de 30 días")
   }
   System_Ext(smtp, "Correo institucional")
   Rel(enf, desk, "Usa")
   Rel(coord, desk, "Usa")
   Rel(desk, proxy, "Peticiones y eventos en tiempo real", "HTTPS/JSON, WSS")
   Rel(proxy, api, "Reenvía", "HTTP, WS")
-  Rel(api, db, "Lee y escribe", "SQL (Prisma)")
-  Rel(backup, db, "Respalda", "pg_dump")
+  Rel(api, db, "Lee y escribe (única escritora)", "Sistema de archivos")
+  Rel(backup, db, "Copia", "Sistema de archivos")
   Rel(api, smtp, "Envía correos", "SMTP")
   UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
 ```
@@ -391,7 +420,7 @@ C4Container
 C4Component
   title Nivel 3 - Componentes de la API (monolito modular)
   Container(desk, "Aplicación de escritorio", "Electron + React")
-  ContainerDb(db, "PostgreSQL", "Base de datos")
+  ContainerDb(db, "Archivos JSON", "Carpeta de datos")
   Container_Boundary(api, "API de aplicación (NestJS)") {
     Component(auth, "Auth", "Módulo", "Login, tokens, guardas por rol, sesiones")
     Component(users, "Personal", "Módulo", "Usuarios, rol, fecha de ingreso, estado")
@@ -419,7 +448,7 @@ C4Component
   Rel(req, rt, "Notifica")
   Rel(chat, rt, "Difunde mensajes")
   Rel(sched, audit, "Registra cambios")
-  Rel(sched, db, "SQL")
+  Rel(sched, db, "Lee y escribe")
   UpdateLayoutConfig($c4ShapeInRow="4", $c4BoundaryInRow="1")
 ```
 
@@ -449,6 +478,8 @@ C4Component
 ```
 
 ### 9.5 Nivel 4 · Modelo de datos (reemplaza el diagrama de código en esta fase)
+
+> Es el **modelo lógico**. No hay base de datos: cada entidad se guarda como un arreglo de objetos en su archivo JSON (ver §8.3). Los `uuid` se generan en la API con `crypto.randomUUID()`, las fechas-hora van como texto ISO 8601 en UTC y las relaciones (`FK`) son simplemente el `id` del otro objeto.
 
 ```mermaid
 erDiagram
@@ -656,13 +687,13 @@ stateDiagram-v2
 
 **Estrategia de pruebas**
 - Unitarias exhaustivas del `rules-engine` con tablas de casos (medianoche, festivos, domingos, cambio de parámetro en mitad del turno, semana que cruza de mes).
-- Integración de la API contra PostgreSQL real en contenedor.
+- Integración de la API contra una carpeta de datos temporal (se crea y se borra en cada prueba).
 - E2E de los 8 flujos de §7 sobre la app Electron (Playwright).
 - UAT con el coordinador y 2–3 enfermeros del 4 al 10 de noviembre.
 
 **Definition of Done:** código revisado por otra persona · pruebas pasando en CI · criterios de aceptación verificados · textos en español revisados · sin advertencias de seguridad críticas · desplegado en el ambiente de pruebas · demo lista.
 
-**Ambientes:** `dev` (local con Docker) → `staging` (servidor de pruebas, usado en demos y UAT) → `prod` (servidor de la institución).
+**Ambientes:** `dev` (local, carpeta `apps/api/datos/`) → `staging` (servidor de pruebas, usado en demos y UAT) → `prod` (servidor de la institución).
 
 **Ramas:** trunk-based con ramas cortas y PR obligatorio; CI con lint, pruebas y build del instalador.
 

@@ -30,7 +30,7 @@
 
 ## 2. Parámetros laborales por defecto (respuesta 6)
 
-Todos se guardan en la tabla `PARAMETRO` con vigencia y los puede cambiar el coordinador.
+Todos se guardan en `parametros.json` con vigencia (no hay base de datos, ver ADR-010) y los puede cambiar el coordinador.
 
 | Clave | Valor por defecto | Justificación |
 |---|---|---|
@@ -121,7 +121,7 @@ La propuesta enviada al cliente dice textualmente: *"Solo se guarda el número, 
 |---|---|
 | RF-PAC-04 | Registro por turno de cada paciente atendido: nombre, tipo y número de documento, diagnóstico (código **CIE-10** + descripción), teléfono y estado de egreso. |
 | RF-PAC-05 | Estado de egreso como lista cerrada: *Continúa hospitalizado, Alta mejorado, Remitido, Alta voluntaria, Fallecido, Otro*. |
-| RNF-13 | Cifrado a nivel de columna de documento, teléfono y diagnóstico (AES-256-GCM en la API; la llave no se guarda en la base de datos). |
+| RNF-13 | Cifrado por campo de documento, teléfono y diagnóstico dentro de `pacientes.json` (AES-256-GCM en la API; la llave no se guarda en la carpeta de datos). |
 | RNF-14 | Solo ven el detalle de un paciente el enfermero que lo registró y el coordinador. Los demás solo ven conteos. |
 | RNF-15 | Toda **consulta** (no solo cambios) de datos de pacientes queda en auditoría. |
 | RNF-16 | Aviso de privacidad y aceptación del tratamiento de datos sensibles en el primer ingreso de cada usuario. |
