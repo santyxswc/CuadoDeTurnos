@@ -117,6 +117,40 @@ export interface UsuarioResumenDto {
   activo: boolean;
 }
 
+export interface SalarioDto {
+  salarioBase: number;
+  /** "YYYY-MM-DD" */
+  vigenteDesde: string;
+}
+
+/** Usuario completo: lo ve el coordinador y cada persona sobre sí misma. */
+export interface UsuarioDto extends UsuarioResumenDto {
+  documento: string;
+  email: string | null;
+  /** "YYYY-MM-DD" */
+  fechaIngreso: string;
+  debeCambiarPassword: boolean;
+  salarios: SalarioDto[];
+}
+
+export interface RespuestaLoginDto {
+  tokenAcceso: string;
+  tokenRefresco: string;
+  /** Segundos de vida del token de acceso. */
+  expiraEn: number;
+  usuario: UsuarioDto;
+}
+
+/** Respuesta al crear un usuario o restablecer su contraseña. */
+export interface UsuarioConPasswordTemporalDto {
+  usuario: UsuarioDto;
+  passwordTemporal: string;
+  advertencias: string[];
+}
+
+/** Código de error cuando la persona debe cambiar la contraseña temporal antes de seguir (RF-AUT-04). */
+export const CODIGO_DEBE_CAMBIAR_PASSWORD = 'DEBE_CAMBIAR_PASSWORD';
+
 export interface TipoTurnoDto {
   id: string;
   codigo: string;
@@ -126,6 +160,35 @@ export interface TipoTurnoDto {
   /** Hora local "HH:mm". Si es menor o igual a horaInicio, el turno termina al día siguiente. */
   horaFin: string;
   color: string;
+  activo: boolean;
+}
+
+export type ValorParametro = string | number | boolean;
+
+export interface ParametroDto {
+  clave: string;
+  valor: ValorParametro;
+  /** "YYYY-MM-DD" */
+  vigenteDesde: string;
+  /** "YYYY-MM-DD" o null si sigue vigente. */
+  vigenteHasta: string | null;
+}
+
+export interface FestivoDto {
+  /** "YYYY-MM-DD" */
+  fecha: string;
+  nombre: string;
+}
+
+export interface EventoAuditoriaDto {
+  fecha: string;
+  actorId: string | null;
+  actorNombre: string | null;
+  accion: string;
+  entidad: string;
+  entidadId: string | null;
+  antes?: unknown;
+  despues?: unknown;
 }
 
 export interface AsignacionDto {
