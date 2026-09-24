@@ -1,0 +1,22 @@
+# Ambiente de desarrollo local: PostgreSQL para la API.
+# Uso: npm run db:up
+services:
+  db:
+    image: postgres:17
+    container_name: sgt-postgres
+    environment:
+      POSTGRES_USER: sgt
+      POSTGRES_PASSWORD: sgt_dev
+      POSTGRES_DB: sgt
+      TZ: UTC
+    ports:
+      - "5432:5432"
+    volumes:
+      - sgt_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sgt -d sgt"]
+      interval: 5s
+      retries: 10
+
+volumes:
+  sgt_pgdata:
