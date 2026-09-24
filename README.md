@@ -32,22 +32,22 @@ Requisitos: Node.js 22 o superior. No se necesita base de datos ni Docker.
 
 ```bash
 npm install
+npm run build
 
-# Prototipo en el navegador (http://localhost:5173)
+# 1. API (http://localhost:3000/api). La primera vez crea el usuario "admin" y muestra su contraseña temporal en la consola.
+cp apps/api/.env.example apps/api/.env      # poner un SGT_JWT_SECRET
+npm run semilla:demo -w @sgt/api            # opcional: 10 usuarios de ejemplo, contraseña Demo2026
+npm run start -w @sgt/api
+
+# 2. App en el navegador (http://localhost:5173), en otra terminal
 npm run dev:desktop
 
 # Prototipo como app de escritorio (ver nota sobre Electron abajo)
 npm run build -w @sgt/desktop
 npm run electron -w @sgt/desktop
 
-# Pruebas del motor de reglas
+# Pruebas (motor de reglas y API)
 npm test
-
-# API (http://localhost:3000/api/salud)
-npm run build && npm run start -w @sgt/api
-
-# Configuración de la API (puerto y carpeta de datos JSON)
-cp apps/api/.env.example apps/api/.env
 ```
 
 > **Electron:** npm 12 bloquea los scripts de instalación y el binario de Electron puede no descargarse (pasa incluso con la aprobación ya guardada en `package.json`). Si `npm run electron` falla, ejecuta una vez:
@@ -60,3 +60,4 @@ cp apps/api/.env.example apps/api/.env
 - [Plan técnico](docs/01_Plan_Tecnico_Equipo_Desarrollo_SGT.md)
 - [Decisiones a partir de las respuestas del cliente](docs/02_Decisiones_Respuestas_Cliente.md)
 - [Bitácora del Sprint 0](docs/03_Bitacora_Sprint0.md)
+- [Bitácora del Sprint 1](docs/04_Bitacora_Sprint1.md): autenticación, administración y endpoints de la API
