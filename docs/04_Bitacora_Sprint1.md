@@ -11,7 +11,7 @@
 | `apps/api/src/almacen` | TypeScript | Persistencia en archivos **JSON** (ADR-010): escritura atómica, cola y caché |
 | `apps/desktop` | TypeScript + React | Login real, cambio de contraseña, cierre por inactividad y Administración conectada a la API |
 | `packages/rules-engine` | TypeScript puro | Cálculo de festivos de Colombia |
-| Pruebas | `node:test` (API) y Vitest (motor) | 60 pruebas en total |
+| Pruebas | `node:test` (API) y Vitest (motor) | 54 pruebas en total (28 del motor, 26 de la API) |
 
 Librerías nuevas: `@nestjs/jwt` (tokens), `class-validator` y `class-transformer` (validación de datos), `@node-rs/argon2` (contraseñas; trae binarios precompilados, así que no necesita scripts de instalación).
 
