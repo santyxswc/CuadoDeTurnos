@@ -3,8 +3,8 @@
 
 | Campo | Valor |
 |---|---|
-| Versión | 0.1 (borrador para revisión interna) |
-| Fecha | 23 de septiembre de 2026 |
+| Versión | 0.2 (incorpora respuestas del cliente, ver [02_Decisiones_Respuestas_Cliente.md](02_Decisiones_Respuestas_Cliente.md)) |
+| Fecha | 24 de septiembre de 2026 |
 | Fase | Planeación · levantamiento de requisitos y arquitectura (sin código) |
 | Fecha de entrega comprometida | Miércoles 11 de noviembre de 2026 |
 | Audiencia | Tech lead, desarrolladores, QA, product owner |
@@ -28,16 +28,16 @@ Un equipo de enfermería necesita reemplazar la gestión manual de su **cuadro d
 | **Must** (MVP) | Login y roles · Gestión del personal · Cuadro de turnos (crear, publicar, vista general de solo lectura) · Marcación de entrada/salida con indicadores de estado · Cálculo de horas diurnas y nocturnas · Conteo de horas y disponibilidad · Solicitudes (cambio de turno, permiso, vacaciones) con aprobación del coordinador · Cálculo de saldo de vacaciones · Filtro de personal apto para cambios (sobrecarga) · Registro de pacientes atendidos · Chat general en la página principal |
 | **Should** | Notificaciones dentro de la app · Exportar cuadro y reportes a PDF/Excel · Marcar mensajes del chat como "Novedad" · Consulta de auditoría para el coordinador · Copiar el cuadro del mes anterior como punto de partida |
 | **Could** | Mensajes directos entre enfermeros · Publicar "turno disponible" desde el chat con botón de postulación · Recuperación de contraseña por correo · Tema oscuro |
-| **Won't (v1)** | Generación automática/optimizada del cuadro · Liquidación de nómina o valor monetario de recargos · App móvil · Integración con biométricos, HIS o sistemas de talento humano · Datos identificables de pacientes · Modo sin conexión |
+| **Won't (v1)** | Generación automática/optimizada del cuadro · Liquidación completa de nómina (sí se calcula el valor estimado de recargos, ver ADR-008) · App móvil · Integración con biométricos, HIS o sistemas de talento humano · ~~Datos identificables de pacientes~~ (el cliente los pidió, ver ADR-009) · Modo sin conexión |
 
 ### 2.2 Supuestos (a confirmar en la reunión del 30-sep)
 
 1. Un solo servicio/unidad con un solo coordinador/a activo (el diseño admite varios servicios, pero la UI del MVP asume uno).
-2. Entre 15 y 60 usuarios. Todos usan equipos Windows 10/11 conectados a la red de la institución.
+2. ~~Entre 15 y 60 usuarios~~ **Confirmado: 10 usuarios (1 coordinador y 9 enfermeros).** Todos usan equipos Windows 10/11 conectados a la red de la institución.
 3. La institución opera en Colombia y la zona horaria es `America/Bogota` (UTC-5, sin horario de verano).
 4. El personal se rige por el Código Sustantivo del Trabajo (sector privado). **Si es entidad pública, los parámetros laborales cambian** (ver RN-01) y deben confirmarse con talento humano.
-5. "Pacientes atendidos" es un **conteo numérico por turno**, sin nombres, documentos ni diagnósticos de pacientes.
-6. La aplicación **cuenta horas**; no calcula dinero. El valor de recargos lo liquida nómina con los reportes exportados.
+5. ~~"Pacientes atendidos" es un conteo numérico por turno~~ **Cambia:** se registran nombre, documento, diagnóstico, teléfono y estado de egreso (ADR-009).
+6. ~~La aplicación cuenta horas; no calcula dinero.~~ **Cambia:** calcula el valor estimado de recargos sobre horas reales (ADR-008); la liquidación oficial sigue siendo de nómina.
 
 ## 3. Actores y matriz de permisos
 
@@ -59,7 +59,7 @@ Un equipo de enfermería necesita reemplazar la gestión manual de su **cuadro d
 | Usar el chat general | ✅ | ✅ |
 | Administrar usuarios, tipos de turno, festivos y parámetros | ❌ | ✅ |
 
-**Pendiente de decisión:** quién aprueba las solicitudes del propio coordinador y quién lo reemplaza en ausencias (ver §14).
+**Decidido:** las solicitudes del propio coordinador se autoaprueban y quedan como constancia (RF-SOL-08). **Pendiente:** quién lo reemplaza en ausencias.
 
 ## 4. Requisitos funcionales
 
@@ -226,7 +226,7 @@ Un cuadro publicado no se sobrescribe: cada cambio crea una versión. Las horas 
 |---|---|---|
 | RNF-01 | Plataforma | Cliente de escritorio instalable en Windows 10/11 (x64). macOS/Linux posibles por el stack, no probados en el MVP. |
 | RNF-02 | Rendimiento | Página principal cargada en < 2 s en red local; mensajes de chat y cambios de estado reflejados en < 1 s. |
-| RNF-03 | Concurrencia | Soportar 60 usuarios conectados simultáneamente sin degradación. |
+| RNF-03 | Concurrencia | Soportar 20 usuarios conectados simultáneamente sin degradación (10 usuarios reales × 2 de margen). |
 | RNF-04 | Seguridad | Contraseñas con Argon2id; tokens de acceso de corta duración con refresh; TLS en todas las comunicaciones, también en red local; autorización por rol en cada endpoint. |
 | RNF-05 | Privacidad | Cumplimiento de la Ley 1581 de 2012 (habeas data): minimización de datos del personal, aviso de privacidad en el primer ingreso, cero datos identificables de pacientes. |
 | RNF-06 | Trazabilidad | Auditoría inmutable de acciones sensibles, retenida mínimo 2 años (a confirmar). |
@@ -322,6 +322,8 @@ Y al publicar el cuadro todo el equipo recibe la notificación
 | ADR-005 | **Hora del servidor** para marcaciones | Hora del cliente | Evita manipulación del reloj del equipo | Aceptada |
 | ADR-006 | Horas calculadas = **dato derivado y recalculable**; snapshot solo al cerrar período | Guardar horas editables | Una sola fuente de verdad (asignaciones y marcaciones) | Propuesta |
 | ADR-007 | Despliegue en **servidor on-premise** de la institución con Docker Compose (API + PostgreSQL + proxy TLS) | Nube (VPS) | Datos dentro de la red; depende de TI del cliente → si no hay servidor disponible, VPS en nube | Por decidir con el cliente |
+| ADR-008 | **Valor estimado de recargos** con porcentajes base parametrizados con vigencia | No calcular dinero | El cliente envió salarios y tabla de recargos | Propuesta, validar 30-sep |
+| ADR-009 | **Registro de pacientes con datos sensibles** cifrados por columna y auditoría de lectura | Solo conteo | El cliente pidió nombre, documento, diagnóstico, teléfono y egreso | Propuesta, requiere aprobación escrita |
 
 ### 8.3 Estructura del monorepo (propuesta)
 ```
