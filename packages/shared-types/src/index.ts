@@ -183,6 +183,8 @@ export const PARAMETROS_DEFECTO = {
   'recargo.extra_diurna_pct': 25,
   'recargo.extra_nocturna_pct': 75,
   'recargo.dominical_pct': 90,
+  /** SMMLV de referencia para validar salarios. Valor 2025: actualizar con el decreto vigente. */
+  'nomina.smmlv': 1_423_500,
 } as const;
 
 export type ClaveParametro = keyof typeof PARAMETROS_DEFECTO;

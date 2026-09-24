@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "noEmit": true,
+    "paths": {
+      "@sgt/shared-types": ["../../packages/shared-types/src/index.ts"],
+      "@sgt/rules-engine": ["../../packages/rules-engine/src/index.ts"]
+    }
+  },
+  "include": ["src"]
+}
