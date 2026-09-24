@@ -18,7 +18,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - name: Pruebas del motor de reglas
-        run: npm test
       - name: Compilar paquetes y aplicaciones
         run: npm run build
+      - name: Pruebas (motor de reglas y API)
+        run: npm test
