@@ -12,8 +12,7 @@
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "dev:desktop": "npm run dev -w @sgt/desktop",
-    "dev:api": "npm run dev -w @sgt/api",
-    "db:up": "docker compose -f infra/docker-compose.yml up -d"
+    "dev:api": "npm run dev -w @sgt/api"
   },
   "engines": {
     "node": ">=22"

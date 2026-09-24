@@ -10,26 +10,25 @@ Entrega comprometida: **11 de noviembre de 2026**.
 |---|---|---|
 | App de escritorio | TypeScript + CSS | Electron, React 19, Vite |
 | API | TypeScript | Node.js, NestJS 11 |
-| Base de datos | SQL (vía Prisma) | PostgreSQL 17, Prisma ORM 7 |
+| Datos | JSON | **Sin base de datos**: archivos JSON que solo la API lee y escribe (ADR-010) |
 | Motor de reglas | TypeScript puro | Sin dependencias; pruebas con Vitest |
-| Infraestructura | YAML | Docker Compose, GitHub Actions |
+| Infraestructura | YAML | GitHub Actions |
 
 ## Estructura
 
 ```
 apps/
   desktop/        App de escritorio (Electron + React). Hoy: prototipo navegable con datos de ejemplo
-  api/            API NestJS + esquema Prisma (prisma/schema.prisma)
+  api/            API NestJS; guarda los datos en archivos JSON (carpeta apps/api/datos/, ignorada por git)
 packages/
   shared-types/   Enums, DTOs y parámetros laborales por defecto
   rules-engine/   Cálculo de horas, recargos, estado del turno y filtro de aptos
-infra/            docker-compose de PostgreSQL para desarrollo
 docs/             Plan técnico, decisiones, bitácora y documentos del cliente
 ```
 
 ## Cómo ejecutar
 
-Requisitos: Node.js 22 o superior. Docker solo si vas a levantar la base de datos.
+Requisitos: Node.js 22 o superior. No se necesita base de datos ni Docker.
 
 ```bash
 npm install
@@ -47,12 +46,14 @@ npm test
 # API (http://localhost:3000/api/salud)
 npm run build && npm run start -w @sgt/api
 
-# Base de datos local
-npm run db:up
+# Configuración de la API (puerto y carpeta de datos JSON)
 cp apps/api/.env.example apps/api/.env
 ```
 
-> **Electron:** si tu versión de npm bloquea los scripts de instalación, el binario de Electron no se descarga. Apruébalo con `npm install-scripts approve electron` y vuelve a ejecutar `npm install`.
+> **Electron:** npm 12 bloquea los scripts de instalación y el binario de Electron puede no descargarse (pasa incluso con la aprobación ya guardada en `package.json`). Si `npm run electron` falla, ejecuta una vez:
+> ```bash
+> node node_modules/electron/install.js
+> ```
 
 ## Documentación
 

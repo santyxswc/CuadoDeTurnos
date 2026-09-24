@@ -8,10 +8,10 @@
 |---|---|---|
 | `apps/desktop` | **TypeScript + TSX (React) + CSS** | Pantallas del prototipo; Electron para empaquetarlo como app de escritorio |
 | `apps/api` | **TypeScript (NestJS)** | Esqueleto de la API con endpoint de salud |
-| `apps/api/prisma/schema.prisma` | **Prisma Schema Language** (se traduce a SQL de PostgreSQL) | Modelo de datos completo |
 | `packages/rules-engine` | **TypeScript puro** | Reglas laborales: horas, recargos, estado del turno, aptitud |
 | `packages/shared-types` | **TypeScript** | Tipos y parámetros compartidos entre API y app |
-| `infra/`, `.github/` | **YAML** | Docker Compose (PostgreSQL) y pipeline de CI |
+| `.github/` | **YAML** | Pipeline de CI |
+| Datos | **JSON** | Sin base de datos: archivos JSON administrados por la API (ADR-010) |
 | `docs/` | **Markdown** | Documentación |
 
 ## Paso a paso
@@ -22,10 +22,14 @@
 | 2 | `docs: incorporar respuestas del cliente…` | Nuevo `02_Decisiones_Respuestas_Cliente.md`. Plan técnico sube a v0.2 (supuestos, ADR-008 y ADR-009, RNF-03). | Las respuestas cambian el alcance: valor en pesos de recargos y datos de pacientes. |
 | 3 | `feat(shared-types)…` | Enums (roles, cargos, estados de solicitud, egreso…), DTOs y `PARAMETROS_DEFECTO`. | Un solo lugar para los valores que usan la API y la app. |
 | 4 | `feat(rules-engine): calcular horas…` | `calcularMinutos` (RN-01) y `valorizarRecargos` (RN-07). 11 pruebas: los 5 casos obligatorios del plan + tabla del cliente. | Es la parte con más riesgo de error; se prueba primero. |
-| 5 | `feat(api)…` | NestJS con `GET /api/salud`; `schema.prisma` con 15 tablas; `docker-compose` de PostgreSQL. | Base para el Sprint 1 (auth y usuarios). |
+| 5 | `feat(api)…` | NestJS con `GET /api/salud`; `schema.prisma` y `docker-compose` de PostgreSQL (**eliminados después en el paso 12**, ver ADR-010). | Base para el Sprint 1 (auth y usuarios). |
 | 6 | `feat(rules-engine): estado del turno y aptos` | `estadoTurno` (En turno, Retrasado, Ausente…) y `evaluarAptitud` (RN-03). 13 pruebas más (24 en total). | El prototipo las usa, así que lo que ve el cliente ya es el cálculo real. |
 | 7 | `feat(desktop)…` | Prototipo navegable con 9 pantallas y datos de ejemplo (1 coordinadora + 9 enfermeros, como el equipo real). | Es lo que se muestra el 30-sep. |
-| 8 | `ci…` | GitHub Actions: valida el esquema, corre las pruebas y compila todo en cada push y pull request. | Definition of Done del plan técnico. |
+| 8 | `ci…` | GitHub Actions: corre las pruebas y compila todo en cada push y pull request. | Definition of Done del plan técnico. |
+| 9 | `docs: agregar README…` | README con instrucciones y esta bitácora. | Control del avance. |
+| 10 | `chore: permitir el script de instalacion de electron` | Aprobación de Electron en `allowScripts`. | npm 12 bloquea los scripts de instalación. |
+| 11 | `docs: reemplazar PostgreSQL por… JSON (ADR-010)` | **Decisión del equipo: no se usa base de datos.** Plan técnico v0.3: ADR-010, carpeta de datos, reglas de escritura segura, diagramas C4, respaldos y pruebas. | Tiempo, costo y complejidad; app interna de 10 usuarios, no expuesta a internet. |
+| 12 | `refactor(api): quitar Prisma y PostgreSQL` | Se eliminan el esquema Prisma, el docker-compose y sus dependencias. Se corrige que `react` no estaba declarado en `apps/desktop/package.json`. | Alinear el código con ADR-010. De paso bajan las alertas de `npm audit` de 6 a 2. |
 
 ## Qué mostrar el 30-sep (guion sugerido, 15 min)
 
@@ -43,8 +47,8 @@
 - [ ] Respuestas del cliente a las preguntas del §6 del documento de decisiones (público/privado, servidor/TI, horarios de turnos, sábado hábil).
 - [ ] Aprobación escrita de ADR-008 (recargos en pesos) y ADR-009 (datos de pacientes).
 - [ ] Subir el repositorio a GitHub y confirmar que el CI pasa.
-- [ ] Revisar las alertas de `npm audit` (vienen de dependencias de las herramientas de desarrollo: CLI de Prisma y Vitest).
+- [ ] Revisar las 2 alertas moderadas de `npm audit` (vienen de Vitest, solo se usa en pruebas).
 
 ## Siguiente: Sprint 1 (30-sep al 6-oct)
 
-Autenticación con los dos roles (Argon2id + tokens), CRUD de usuarios, tipos de turno, parámetros con vigencia y festivos contra PostgreSQL real, y conectar la página principal a la API.
+Autenticación con los dos roles (Argon2id + tokens), CRUD de usuarios, tipos de turno, parámetros con vigencia y festivos guardados en archivos JSON (capa de repositorios con escritura atómica, ADR-010), y conectar la página principal a la API.
