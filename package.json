@@ -1,0 +1,21 @@
+{
+  "name": "sgt",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SGT - Sistema de Gestión de Turnos de Enfermería (TurnoCare)",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "dev:desktop": "npm run dev -w @sgt/desktop",
+    "dev:api": "npm run dev -w @sgt/api",
+    "db:up": "docker compose -f infra/docker-compose.yml up -d"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
