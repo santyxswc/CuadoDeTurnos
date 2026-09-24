@@ -46,7 +46,7 @@
 
 - [ ] Respuestas del cliente a las preguntas del §6 del documento de decisiones (público/privado, servidor/TI, horarios de turnos, sábado hábil).
 - [ ] Aprobación escrita de ADR-008 (recargos en pesos) y ADR-009 (datos de pacientes).
-- [ ] Subir el repositorio a GitHub y confirmar que el CI pasa.
+- [x] Subir el repositorio a GitHub y confirmar que el CI pasa (24-sep, commit `b55de92`).
 - [ ] Revisar las 2 alertas moderadas de `npm audit` (vienen de Vitest, solo se usa en pruebas).
 
 ## Siguiente: Sprint 1 (30-sep al 6-oct)
