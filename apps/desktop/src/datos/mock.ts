@@ -33,6 +33,14 @@ export const PERSONAS: Persona[] = [
 
 export const persona = (id: string) => PERSONAS.find((p) => p.id === id)!;
 
+/**
+ * Persona del prototipo que corresponde a un usuario real (mismo documento). Si no hay, se usa
+ * la coordinadora o un enfermero de ejemplo según el rol. Temporal hasta conectar esas pantallas a la API.
+ */
+export function idPrototipo(documento: string, rol: Rol): string {
+  return PERSONAS.find((p) => p.documento === documento)?.id ?? (rol === 'COORDINADOR' ? 'u0' : 'u1');
+}
+
 export interface TipoTurno {
   codigo: string;
   nombre: string;

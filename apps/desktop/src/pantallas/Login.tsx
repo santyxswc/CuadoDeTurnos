@@ -1,46 +1,49 @@
 import { useState } from 'react';
-import { NOMBRE_CARGO } from '@sgt/shared-types';
-import { useEstado } from '../estado';
-import { PERSONAS } from '../datos/mock';
+import { useSesion } from '../sesion';
 
 export function Login() {
-  const { iniciarSesion } = useEstado();
-  const [usuarioId, setUsuarioId] = useState('u0');
+  const { iniciar, aviso } = useSesion();
+  const [usuario, setUsuario] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [cargando, setCargando] = useState(false);
 
   return (
     <div className="login">
       <form
         className="tarjeta"
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault();
-          iniciarSesion(usuarioId);
+          setError(null);
+          setCargando(true);
+          try {
+            await iniciar(usuario.trim(), password);
+          } catch (err) {
+            setError((err as Error).message);
+            setPassword('');
+          } finally {
+            setCargando(false);
+          }
         }}
       >
         <div className="marca">
           Turno<b>Care</b>
         </div>
         <p className="sub">Gestión de turnos de enfermería</p>
+        {aviso && <div className="alerta-caja aviso">{aviso}</div>}
         <label>
-          Usuario (prototipo: elige con quién entrar)
-          <select value={usuarioId} onChange={(e) => setUsuarioId(e.target.value)}>
-            {PERSONAS.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.nombres} · {p.rol === 'COORDINADOR' ? 'Coordinador/a' : NOMBRE_CARGO[p.cargo]}
-              </option>
-            ))}
-          </select>
+          Documento o correo
+          <input autoFocus autoComplete="username" value={usuario} onChange={(e) => setUsuario(e.target.value)} />
         </label>
         <label>
           Contraseña
-          <input type="password" defaultValue="demo1234" />
+          <input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
         </label>
-        <button className="primario grande" type="submit">
-          Ingresar
+        {error && <div className="alerta-caja error">{error}</div>}
+        <button className="primario grande" type="submit" disabled={cargando || !usuario || !password}>
+          {cargando ? 'Ingresando…' : 'Ingresar'}
         </button>
-        <div className="alerta-caja info">
-          En la versión final: contraseña temporal con cambio obligatorio en el primer ingreso, aviso de privacidad
-          (Ley 1581) y cierre de sesión por inactividad a los 15 minutos.
-        </div>
+        <small style={{ color: 'var(--suave)' }}>¿Olvidaste tu contraseña? Pídele al coordinador que la restablezca.</small>
       </form>
     </div>
   );
